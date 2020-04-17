@@ -1,0 +1,84 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.2.5
+  creationTimestamp: null
+  name: repositories.atlas.jpereira.co.uk
+spec:
+  group: atlas.jpereira.co.uk
+  names:
+    kind: Repository
+    listKind: RepositoryList
+    plural: repositories
+    singular: repository
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: Repository is the Schema for the repositories API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: RepositorySpec defines the desired state of Repository
+          properties:
+            serviceAccount:
+              type: string
+            tag:
+              type: string
+          type: object
+        status:
+          description: RepositoryStatus defines the observed state of Repository
+          properties:
+            conditions:
+              description: Conditions is the schema for the conditions portion of
+                the payload
+              items:
+                properties:
+                  message:
+                    description: A human readable message indicating details about
+                      the transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of condition.
+                    type: string
+                required:
+                - status
+                - type
+                type: object
+              type: array
+            latestImage:
+              type: string
+            observedGeneration:
+              format: int64
+              type: integer
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

@@ -1,0 +1,8 @@
+---
+apiVersion: atlas.jpereira.co.uk/v1alpha1
+kind: Repository
+metadata:
+  name: first-repository
+spec:
+  tag: registry.default.svc.cluster.local:5001/product-1
+#sha256:84ea0a4025cd30a2221f48def8e4de114a1045db48c0680d7e7b297d47cea28f

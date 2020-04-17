@@ -1,0 +1,10 @@
+domain: jpereira.co.uk
+repo: github.com/joaopapereira/atlas
+resources:
+- group: atlas
+  kind: Product
+  version: v1alpha1
+- group: atlas
+  kind: Repository
+  version: v1alpha1
+version: "2"
