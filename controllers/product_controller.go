@@ -25,11 +25,16 @@ import (
 	atlasv1alpha1 "github.com/joaopapereira/atlas/api/v1alpha1"
 )
 
+type ProductUseCase interface {
+	Execute(product atlasv1alpha1.Product) (atlasv1alpha1.Product, error)
+}
+
 // ProductReconciler reconciles a Product object
 type ProductReconciler struct {
 	client.Client
-	Log    logr.Logger
-	Scheme *runtime.Scheme
+	Log     logr.Logger
+	Scheme  *runtime.Scheme
+	UseCase ProductUseCase
 }
 
 // +kubebuilder:rbac:groups=atlas.jpereira.co.uk,resources=products,verbs=get;list;watch;create;update;patch;delete
@@ -39,11 +44,28 @@ func (r *ProductReconciler) Reconcile(req ctrl.Request) (ctrl.Result, error) {
 	ctx := context.Background()
 	log := r.Log.WithValues("product", req.NamespacedName)
 
-	// your logic here
-	var product atlasv1alpha1.Product
-	if err := r.Get(ctx, req.NamespacedName, &product); err != nil {
-		log.Error(err, "unable to fetch CronJob")
+	var newProduct atlasv1alpha1.Product
+	if err := r.Get(ctx, req.NamespacedName, &newProduct); err != nil {
+		log.Error(err, "unable to fetch Product")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if newProduct.Generation == newProduct.Status.ObservedGeneration {
+		log.Info("no need to reconcile")
+		return ctrl.Result{}, nil
+	}
+
+	product, err := r.UseCase.Execute(newProduct)
+	if err != nil {
+		log.Error(err, "executing use case")
+		return ctrl.Result{}, err
+	}
+
+	product.Status.ObservedGeneration = newProduct.Generation + 1
+
+	if err := r.Status().Update(ctx, &product); err != nil {
+		log.Error(err, "updating product")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil

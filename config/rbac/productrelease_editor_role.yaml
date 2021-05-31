@@ -1,0 +1,24 @@
+# permissions for end users to edit productreleases.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: productrelease-editor-role
+rules:
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
+  - productreleases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
+  - productreleases/status
+  verbs:
+  - get

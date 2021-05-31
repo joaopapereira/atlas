@@ -1,0 +1,20 @@
+# permissions for end users to view productreleases.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: productrelease-viewer-role
+rules:
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
+  - productreleases
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
+  - productreleases/status
+  verbs:
+  - get

@@ -67,13 +67,13 @@ func (p *productRepo) CreateOrUpdate(ref *metav1.OwnerReference, namespace strin
 	if versionExists {
 		return nil
 	}
-	product.Status.Versions = append(product.Status.Versions, v1alpha1.ProductLocation{
+	product.Spec.Versions = append(product.Status.Versions, v1alpha1.ProductLocation{
 		ImageRepo: imageJson.ImageRepo,
 		ImageSHA:  imageJson.ImageSHA,
 		Version: v1alpha1.Version{
-			Major: imageJson.Version.Major,
-			Minor: imageJson.Version.Minor,
-			Patch: imageJson.Version.Patch,
+			Major: imageJson.Version.Major(),
+			Minor: imageJson.Version.Minor(),
+			Patch: imageJson.Version.Patch(),
 		},
 	})
 
@@ -89,5 +89,5 @@ func (p *productRepo) createOrUpdate(ctx context.Context, product v1alpha1.Produ
 }
 
 func compareVersions(v1 v1alpha1.Version, v2 repository.Version) bool {
-	return v1.Major == v2.Major && v1.Minor == v2.Minor && v1.Patch == v2.Patch
+	return v1.Major == v2.Major() && v1.Minor == v2.Minor() && v1.Patch == v2.Patch()
 }

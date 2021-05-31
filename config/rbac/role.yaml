@@ -9,6 +9,26 @@ rules:
 - apiGroups:
   - atlas.jpereira.co.uk
   resources:
+  - productreleases
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
+  - productreleases/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - atlas.jpereira.co.uk
+  resources:
   - products
   verbs:
   - create

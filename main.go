@@ -66,17 +66,20 @@ func main() {
 		os.Exit(1)
 	}
 
+	productRepo := product.NewRepo(mgr.GetClient())
+	productUseCase := product.NewUseCase(productRepo)
+
 	if err = (&controllers.ProductReconciler{
-		Client: mgr.GetClient(),
-		Log:    ctrl.Log.WithName("controllers").WithName("Product"),
-		Scheme: mgr.GetScheme(),
+		Client:  mgr.GetClient(),
+		Log:     ctrl.Log.WithName("controllers").WithName("Product"),
+		Scheme:  mgr.GetScheme(),
+		UseCase: productUseCase,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Product")
 		os.Exit(1)
 	}
 
-	productRepo := product.NewRepo(mgr.GetClient())
-	repoUseCase := repository.NewUseCase(productRepo)
+	repoUseCase := repository.NewUseCase(productRepo, nil)
 
 	if err = (&controllers.RepositoryReconciler{
 		Client:  mgr.GetClient(),
@@ -85,6 +88,15 @@ func main() {
 		UseCase: repoUseCase,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Repository")
+		os.Exit(1)
+	}
+
+	if err = (&controllers.ProductReleaseReconciler{
+		Client: mgr.GetClient(),
+		Log:    ctrl.Log.WithName("controllers").WithName("ProductRelease"),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ProductRelease")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder

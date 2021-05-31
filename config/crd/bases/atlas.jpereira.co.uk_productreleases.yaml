@@ -6,20 +6,18 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.2.5
   creationTimestamp: null
-  name: products.atlas.jpereira.co.uk
+  name: productreleases.atlas.jpereira.co.uk
 spec:
   group: atlas.jpereira.co.uk
   names:
-    kind: Product
-    listKind: ProductList
-    plural: products
-    singular: product
+    kind: ProductRelease
+    listKind: ProductReleaseList
+    plural: productreleases
+    singular: productrelease
   scope: Namespaced
-  subresources:
-    status: {}
   validation:
     openAPIV3Schema:
-      description: Product is the Schema for the products API
+      description: ProductRelease is the Schema for the productreleases API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -34,39 +32,24 @@ spec:
         metadata:
           type: object
         spec:
-          description: ProductSpec defines the desired state of Product
+          description: ProductReleaseSpec defines the desired state of ProductRelease
           properties:
-            baseRegistryLocation:
-              type: string
-            description:
-              type: string
-            import:
-              type: boolean
-            name:
+            image:
               type: string
             slug:
               type: string
-            versions:
-              items:
-                properties:
-                  imageRepo:
-                    type: string
-                  imageSha:
-                    type: string
-                  version:
-                    properties:
-                      major:
-                        type: string
-                      minor:
-                        type: string
-                      patch:
-                        type: string
-                    type: object
-                type: object
-              type: array
+            version:
+              properties:
+                major:
+                  type: string
+                minor:
+                  type: string
+                patch:
+                  type: string
+              type: object
           type: object
         status:
-          description: ProductStatus defines the observed state of Product
+          description: ProductReleaseStatus defines the observed state of ProductRelease
           properties:
             conditions:
               description: Conditions is the schema for the conditions portion of
@@ -91,24 +74,6 @@ spec:
             observedGeneration:
               format: int64
               type: integer
-            versions:
-              items:
-                properties:
-                  imageRepo:
-                    type: string
-                  imageSha:
-                    type: string
-                  version:
-                    properties:
-                      major:
-                        type: string
-                      minor:
-                        type: string
-                      patch:
-                        type: string
-                    type: object
-                type: object
-              type: array
           type: object
       type: object
   version: v1alpha1

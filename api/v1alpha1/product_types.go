@@ -1,6 +1,4 @@
 /*
-
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -25,8 +23,11 @@ type ProductSpec struct {
 	// +kubebuilder:validation:Required
 	Name string `json:"name,omitempty"`
 	// +kubebuilder:validation:Required
-	Slug        string `json:"slug,omitempty"`
-	Description string `json:"description,omitempty"`
+	Slug                 string            `json:"slug,omitempty"`
+	Import               bool              `json:"import,omitempty"`
+	BaseRegistryLocation string            `json:"baseRegistryLocation,omitempty"`
+	Description          string            `json:"description,omitempty"`
+	Versions             []ProductLocation `json:"versions,omitempty"`
 }
 
 type Version struct {
@@ -37,7 +38,8 @@ type Version struct {
 
 // ProductStatus defines the observed state of Product
 type ProductStatus struct {
-	Versions []ProductLocation `json:"versions,omitempty"`
+	AtlasStatus `json:",inline"`
+	Versions    []ProductLocation `json:"versions,omitempty"`
 }
 
 type ProductLocation struct {
@@ -50,6 +52,7 @@ type ProductLocation struct {
 }
 
 // +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Product is the Schema for the products API
 type Product struct {

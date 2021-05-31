@@ -35,9 +35,12 @@ func testUseCase(t *testing.T, when spec.G, it spec.S) {
 	var (
 		readerFake         = &repositoryReaderFake{}
 		productCreatorFake = &productCreatorFake{}
-		subject            = NewUseCaseWithReader(productCreatorFake, readerFake)
+		releaseRepoFake    = &releaseRepoFake{}
+		subject            = NewUseCaseWithReader(productCreatorFake, releaseRepoFake, readerFake)
 	)
-
+	const (
+		namespace = "some-namespace"
+	)
 	when("#Execute", func() {
 		when("cannot read image", func() {
 			it.Before(func() {
@@ -61,6 +64,23 @@ func testUseCase(t *testing.T, when spec.G, it spec.S) {
 				assert.Equal(t, "some-image/place:123abc", result.Status.LatestImage)
 				assert.Equal(t, 0, productCreatorFake.numberOfCalls)
 			})
+		})
+
+		it("does nothing when already processed the current image", func() {
+			readerFake.returnLabel = `[{}]`
+			readerFake.returnImageRef = "some-image/place:123abc"
+			repo := atlasv1alpha1.Repository{
+				Spec: atlasv1alpha1.RepositorySpec{
+					Tag:            "some-image/place:tag",
+					ServiceAccount: "service-account",
+				},
+				Status: atlasv1alpha1.RepositoryStatus{
+					LatestImage: "some-image/place:123abc",
+				},
+			}
+			_, err := subject.Execute(repo)
+			require.NoError(t, err)
+			require.Equal(t, 0, productCreatorFake.numberOfCalls)
 		})
 
 		it("returns status MetadataFormat when cannot unmarshal image metadata", func() {
@@ -112,18 +132,59 @@ func testUseCase(t *testing.T, when spec.G, it spec.S) {
 			require.Equal(t, 1, productCreatorFake.numberOfCalls)
 			assert.Equal(t, ImageJSON{
 				Product: Product{
-					Name: "some product",
-					Slug: "some-product",
-					Version: Version{
-						Major: "3",
-						Minor: "2",
-						Patch: "1",
-					},
+					Name:    "some product",
+					Slug:    "some-product",
+					Version: NewVersion("3.2.1"),
 				},
 				ImageRepo: "some-other/image",
 				ImageSHA:  "de434baf69e0d821eba847e1187e68dff4c27bdf99caf1e3417e6ab50e8533a7",
 			}, productCreatorFake.calledWith[0])
 		})
+
+		//		it("creates new product releases", func() {
+		//			readerFake.returnLabel = `[{
+		//	"name": "some product",
+		//	"slug": "some-product",
+		//    "version": {
+		//		"major": "3",
+		//		"minor": "2",
+		//		"patch": "1"
+		//    },
+		//	"imageRepo": "some-other/image",
+		//    "imageSha": "de434baf69e0d821eba847e1187e68dff4c27bdf99caf1e3417e6ab50e8533a7"
+		//}]`
+		//			readerFake.returnImageRef = "some-image/place:1231232523452345"
+		//			repo := atlasv1alpha1.Repository{
+		//				ObjectMeta: metav1.ObjectMeta{
+		//					Namespace: namespace,
+		//				},
+		//				Spec: atlasv1alpha1.RepositorySpec{
+		//					Tag:            "some-image/place:tag",
+		//					ServiceAccount: "service-account",
+		//				},
+		//				Status: atlasv1alpha1.RepositoryStatus{
+		//					LatestImage: "some-image/place:123abc",
+		//				},
+		//			}
+		//			_, err := subject.Execute(repo)
+		//			require.NoError(t, err)
+		//			require.Equal(t, 1, releaseRepoFake.numberOfCalls)
+		//			assert.Equal(t, atlasv1alpha1.ProductRelease{
+		//				ObjectMeta: metav1.ObjectMeta{
+		//					GenerateName: "some-product",
+		//					Namespace:    namespace,
+		//				},
+		//				Spec: atlasv1alpha1.ProductReleaseSpec{
+		//					Slug: "some-product",
+		//					Version: atlasv1alpha1.Version{
+		//						Major: "3",
+		//						Minor: "2",
+		//						Patch: "1",
+		//					},
+		//					Image: "some-other/image@sha256:de434baf69e0d821eba847e1187e68dff4c27bdf99caf1e3417e6ab50e8533a7",
+		//				},
+		//			}, releaseRepoFake.calledWith[0])
+		//		})
 	})
 }
 
@@ -146,5 +207,17 @@ type productCreatorFake struct {
 func (r *productCreatorFake) CreateOrUpdate(_ *metav1.OwnerReference, _ string, imageJson ImageJSON) error {
 	r.numberOfCalls++
 	r.calledWith = append(r.calledWith, imageJson)
+	return r.returnError
+}
+
+type releaseRepoFake struct {
+	returnError   error
+	calledWith    []atlasv1alpha1.ProductRelease
+	numberOfCalls int
+}
+
+func (r *releaseRepoFake) Save(release atlasv1alpha1.ProductRelease) error {
+	r.numberOfCalls++
+	r.calledWith = append(r.calledWith, release)
 	return r.returnError
 }

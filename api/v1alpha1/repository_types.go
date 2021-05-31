@@ -32,9 +32,8 @@ const MetadataFormat corev1.ConditionStatus = "MetadataFormat"
 
 // RepositoryStatus defines the observed state of Repository
 type RepositoryStatus struct {
-	Conditions         Conditions `json:"conditions,omitempty"`
-	ObservedGeneration int64      `json:"observedGeneration,omitempty"`
-	LatestImage        string     `json:"latestImage,omitempty"`
+	AtlasStatus `json:",inline"`
+	LatestImage string `json:"latestImage,omitempty"`
 }
 
 // +kubebuilder:object:root=true

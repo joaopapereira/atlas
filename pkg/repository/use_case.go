@@ -25,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	atlasv1alpha1 "github.com/joaopapereira/atlas/api/v1alpha1"
+	pkg "github.com/joaopapereira/atlas/pkg"
 )
 
 const RepositoryLabel = "repository.atlas.jpereira.co.uk"
@@ -37,23 +38,30 @@ type ProductCreator interface {
 	CreateOrUpdate(ref *metav1.OwnerReference, namespace string, imageJson ImageJSON) error
 }
 
-func NewUseCaseWithReader(productCreator ProductCreator, reader RegistryReader) *useCase {
+type ReleaseRepo interface {
+	Save(release atlasv1alpha1.ProductRelease) error
+}
+
+func NewUseCaseWithReader(productCreator ProductCreator, releaseRepo ReleaseRepo, reader RegistryReader) *useCase {
 	return &useCase{
 		RepositoryReader: reader,
 		ProductCreator:   productCreator,
+		releaseRepo:      releaseRepo,
 	}
 }
 
-func NewUseCase(productCreator ProductCreator) *useCase {
+func NewUseCase(productCreator ProductCreator, releaseRepo ReleaseRepo) *useCase {
 	return &useCase{
 		RepositoryReader: &repositoryReader{},
 		ProductCreator:   productCreator,
+		releaseRepo:      releaseRepo,
 	}
 }
 
 type useCase struct {
 	RepositoryReader RegistryReader
 	ProductCreator   ProductCreator
+	releaseRepo      ReleaseRepo
 }
 
 func (u useCase) Execute(repository atlasv1alpha1.Repository) (atlasv1alpha1.Repository, error) {
@@ -65,6 +73,10 @@ func (u useCase) Execute(repository atlasv1alpha1.Repository) (atlasv1alpha1.Rep
 		return repo, nil
 	}
 
+	if imageRef == repo.Status.LatestImage {
+		return repo, nil
+	}
+
 	var imagesJson ImagesJSON
 	err = json.Unmarshal([]byte(images), &imagesJson)
 	if err != nil {
@@ -73,19 +85,31 @@ func (u useCase) Execute(repository atlasv1alpha1.Repository) (atlasv1alpha1.Rep
 	}
 
 	for _, imageJSON := range imagesJson {
-		if err := u.ProductCreator.CreateOrUpdate(repoOwnerRef(repo), repo.Namespace, imageJSON); err != nil {
+		if err := u.ProductCreator.CreateOrUpdate(pkg.RepoOwnerRef(&repo), repo.Namespace, imageJSON); err != nil {
 			return atlasv1alpha1.Repository{}, err
 		}
+		//
+		//u.releaseRepo.Save(atlasv1alpha1.ProductRelease{
+		//	ObjectMeta: metav1.ObjectMeta{
+		//		Namespace:    repo.Namespace,
+		//		GenerateName: imageJSON.Slug,
+		//	},
+		//	Spec: atlasv1alpha1.ProductReleaseSpec{
+		//		Slug: imageJSON.Slug,
+		//		Version: atlasv1alpha1.Version{
+		//			Major: imageJSON.Version.Major(),
+		//			Minor: imageJSON.Version.Minor(),
+		//			Patch: imageJSON.Version.Patch(),
+		//		},
+		//		Image: fmt.Sprintf("%s@sha256:%s", imageJSON.ImageRepo, imageJSON.ImageSHA),
+		//	},
+		//})
 	}
 
 	repo.Status.AddCondition(atlasv1alpha1.ConditionSucceeded, corev1.ConditionTrue, "")
 	repo.Status.LatestImage = imageRef
 
 	return repo, nil
-}
-
-func repoOwnerRef(repo atlasv1alpha1.Repository) *metav1.OwnerReference {
-	return metav1.NewControllerRef(repo.GetObjectMeta(), repo.GroupVersionKind())
 }
 
 type repositoryReader struct {

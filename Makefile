@@ -15,6 +15,9 @@ endif
 
 all: manager
 
+registry:
+	docker-compose up -d
+
 # Run tests
 test: generate fmt vet manifests
 	KUBEBUILDER_ASSETS=$(KUBEBUILDER_ASSETS) go test ./... -coverprofile cover.out

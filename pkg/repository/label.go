@@ -13,6 +13,8 @@ limitations under the License.
 */
 package repository
 
+import "strings"
+
 type ImageLabel struct {
 	Images ImagesJSON
 }
@@ -29,9 +31,9 @@ type ImageJSON struct {
 }
 
 type Version struct {
-	Major string `json:"major,omitempty"`
-	Minor string `json:"minor,omitempty"`
-	Patch string `json:"patch,omitempty"`
+	MajorV string `json:"major,omitempty"`
+	MinorV string `json:"minor,omitempty"`
+	PatchV string `json:"patch,omitempty"`
 }
 
 type Product struct {
@@ -42,4 +44,24 @@ type Product struct {
 
 type Dependency struct {
 	Product `json:",inline"`
+}
+
+func NewVersion(version string) Version {
+	v := strings.Split(version, ".")
+
+	return Version{
+		MajorV: v[0],
+		MinorV: v[1],
+		PatchV: v[2],
+	}
+}
+
+func (v Version) Major() string {
+	return v.MajorV
+}
+func (v Version) Minor() string {
+	return v.MinorV
+}
+func (v Version) Patch() string {
+	return v.PatchV
 }
